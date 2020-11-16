@@ -221,6 +221,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
                 while (!stopped && selectedKeys.hasNext()) {
                     SelectionKey key = selectedKeys.next();
+                    LOG.info("key:" + key.interestOps());
                     selectedKeys.remove();
 
                     if (!key.isValid()) {
@@ -268,6 +269,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          * @return whether was able to accept a connection or not
          */
         private boolean doAccept() {
+            LOG.info("======>>>处理客户端连接请求开始");
             boolean accepted = false;
             SocketChannel sc = null;
             try {
@@ -284,7 +286,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
 
                 LOG.debug("Accepted socket connection from {}", sc.socket().getRemoteSocketAddress());
-
+                LOG.info("======>>>完成客户端连接请求");
                 sc.configureBlocking(false);
 
                 // Round-robin assign this connection to a selector thread
@@ -638,7 +640,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
         maxClientCnxns = maxcc;
         initMaxCnxns();
-        sessionlessCnxnTimeout = Integer.getInteger(ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
+        sessionlessCnxnTimeout = Integer.getInteger(ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 1000000);
         // We also use the sessionlessCnxnTimeout as expiring interval for
         // cnxnExpiryQueue. These don't need to be the same, but the expiring
         // interval passed into the ExpiryQueue() constructor below should be

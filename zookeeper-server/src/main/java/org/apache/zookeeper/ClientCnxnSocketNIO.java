@@ -257,6 +257,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
      */
     void registerAndConnect(SocketChannel sock, InetSocketAddress addr) throws IOException {
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
+        LOG.info("=========>>> 客户端发起连接");
         boolean immediateConnect = sock.connect(addr);
         if (immediateConnect) {
             sendThread.primeConnection();
