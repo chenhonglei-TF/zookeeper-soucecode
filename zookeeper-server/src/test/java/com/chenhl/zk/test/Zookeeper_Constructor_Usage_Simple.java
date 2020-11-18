@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class Zookeeper_Constructor_Usage_Simple implements Watcher {
     public static final String zk_addr="127.0.0.1:2181";
+//    public static final String zk_addr="192.168.1.111:2181";
     private static CountDownLatch countDownLatch = new CountDownLatch(1);
 
     public void process(WatchedEvent watchedEvent) {

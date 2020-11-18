@@ -137,6 +137,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
                 }
 
                 Request request = submittedRequests.take();
+                LOG.info("=======>>> 请求限流线程从已提交请求队列获取请求");
                 if (Request.requestOfDeath == request) {
                     break;
                 }
@@ -230,6 +231,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             LOG.debug("Shutdown in progress. Request cannot be processed");
             dropRequest(request);
         } else {
+            LOG.info("========>>> 进入RequestThrottler.submitRequest,将创建session请求添加到submittedRequests队列");
             submittedRequests.add(request);
         }
     }

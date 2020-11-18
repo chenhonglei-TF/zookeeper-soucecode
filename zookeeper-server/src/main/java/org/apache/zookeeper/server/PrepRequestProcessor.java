@@ -138,6 +138,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             while (true) {
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
                 Request request = submittedRequests.take();
+                LOG.info("=======>>> PrepRequestProcessor 从已提交请求队列获取请求, request={}", request);
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
                     .add(Time.currentElapsedTime() - request.prepQueueStartTime);
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
@@ -316,6 +317,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param record
      */
     protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
+        LOG.info("=======>>> 进入PrepRequestProcessor.pRequest2Txn方法,type="+type);
         if (request.getHdr() == null) {
             request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
                     Time.currentWallTime(), type));
@@ -574,6 +576,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             request.setTxn(new CreateSessionTxn(to));
             request.request.rewind();
             // only add the global session tracker but not to ZKDb
+            LOG.info("=======>>> request.sessionId={}", request.sessionId);
             zks.sessionTracker.trackSession(request.sessionId, to);
             zks.setOwner(request.sessionId, request.getOwner());
             break;
@@ -642,6 +645,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         // If the txn is not going to mutate anything, like createSession,
         // we just set the current tree digest in it
         if (request.getTxnDigest() == null && digestEnabled) {
+            LOG.info("=======>>> request.getTxnDigest() == null ? " + (request.getTxnDigest() == null));
+            LOG.info("=======>>> digestEnabled ? " + digestEnabled);
             setTxnDigest(request);
         }
     }
@@ -761,6 +766,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param request
      */
     protected void pRequest(Request request) throws RequestProcessorException {
+        LOG.info("=======>>> 进入PrepRequestProcessor.pRequest方法, request.type={}" ,request.type);
         // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
         // request.type + " id = 0x" + Long.toHexString(request.sessionId));
         request.setHdr(null);
@@ -768,6 +774,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
         try {
             switch (request.type) {
+
             case OpCode.createContainer:
             case OpCode.create:
             case OpCode.create2:
@@ -869,6 +876,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
                 request.setTxn(new MultiTxn(txns));
                 if (digestEnabled) {
+                    LOG.info("=======>>> digestEnabled=" +digestEnabled);
                     setTxnDigest(request);
                 }
 
@@ -878,6 +886,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.createSession:
             case OpCode.closeSession:
                 if (!request.isLocalSession()) {
+                    LOG.info("=======>>> isLocalSession=" + request.isLocalSession());
                     pRequest2Txn(request.type, zks.getNextZxid(), request, null, true);
                 }
                 break;
@@ -942,6 +951,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
         request.zxid = zks.getZxid();
         ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - request.prepStartTime);
+        LOG.info("=======>>> nextProcessor.processRequest, {} ", Thread.currentThread().getName());
         nextProcessor.processRequest(request);
     }
 
@@ -1090,6 +1100,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             default:
                 return null;
         }
+        LOG.info("=======>>>计算treeDigest入口1");
         long treeDigest = getCurrentTreeDigest() - prevNodeDigest + newNodeDigest;
         return new PrecalculatedDigest(newNodeDigest, treeDigest);
     }
@@ -1119,6 +1130,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     private void setTxnDigest(Request request) {
+        LOG.info("=======>>>计算treeDigest入口2");
         request.setTxnDigest(new TxnDigest(digestCalculator.getDigestVersion(), getCurrentTreeDigest()));
     }
 

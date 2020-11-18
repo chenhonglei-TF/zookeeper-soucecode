@@ -286,7 +286,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
 
                 LOG.debug("Accepted socket connection from {}", sc.socket().getRemoteSocketAddress());
-                LOG.info("======>>>完成客户端连接请求");
                 sc.configureBlocking(false);
 
                 // Round-robin assign this connection to a selector thread
@@ -305,6 +304,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 acceptErrorLogger.rateLimitLog("Error accepting new connection: " + e.getMessage());
                 fastCloseSock(sc);
             }
+            LOG.info("======>>>处理客户端连接请求结束, accepted:"+accepted);
             return accepted;
         }
 
@@ -353,6 +353,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             if (stopped || !acceptedQueue.offer(accepted)) {
                 return false;
             }
+            LOG.info("=======>>> 将连接放到acceptedQueue");
             wakeupSelector();
             return true;
         }
@@ -381,8 +382,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             try {
                 while (!stopped) {
                     try {
+                        LOG.info("=======>>>SelectorThread开始执行");
                         select();
+                        LOG.info("=======>>>SelectorThread开始执行processAcceptedConnections");
                         processAcceptedConnections();
+                        LOG.info("=======>>>SelectorThread开始执行processInterestOpsUpdateRequests");
                         processInterestOpsUpdateRequests();
                     } catch (RuntimeException e) {
                         LOG.warn("Ignoring unexpected runtime exception", e);
@@ -424,6 +428,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 Iterator<SelectionKey> selectedKeys = selectedList.iterator();
                 while (!stopped && selectedKeys.hasNext()) {
                     SelectionKey key = selectedKeys.next();
+                    LOG.info("=======>>> 进入NIOServerCnxnFactory.SelectorThread.select方法,key="+key.interestOps());
                     selected.remove(key);
 
                     if (!key.isValid()) {
@@ -431,6 +436,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                         continue;
                     }
                     if (key.isReadable() || key.isWritable()) {
+                        LOG.info("=======>>> 进入NIOServerCnxnFactory.SelectorThread.select方法,key.isReadable()="+key.isReadable()+",key.isWritable()="+key.isWritable());
                         handleIO(key);
                     } else {
                         LOG.warn("Unexpected ops in select {}", key.readyOps());
@@ -447,6 +453,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          * I/O is run directly by this thread.
          */
         private void handleIO(SelectionKey key) {
+            LOG.info("=======>>> 进入NIOServerCnxnFactory.SelectorThread.handleIO方法");
             IOWorkRequest workRequest = new IOWorkRequest(this, key);
             NIOServerCnxn cnxn = (NIOServerCnxn) key.attachment();
 
@@ -467,7 +474,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             while (!stopped && (accepted = acceptedQueue.poll()) != null) {
                 SelectionKey key = null;
                 try {
+                    LOG.info("=======>>>进入NIOServerCnxnFactory.SelectorThread.processAcceptedConnections，注册读事件");
                     key = accepted.register(selector, SelectionKey.OP_READ);
+                    LOG.info("=======>>>进入NIOServerCnxnFactory.SelectorThread.processAcceptedConnections，创建连接");
                     NIOServerCnxn cnxn = createConnection(accepted, key, this);
                     key.attach(cnxn);
                     addCnxn(cnxn);
@@ -491,6 +500,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
                 NIOServerCnxn cnxn = (NIOServerCnxn) key.attachment();
                 if (cnxn.isSelectable()) {
+                    LOG.info("=======>>>NIOServerCnxnFactory.SelectorThread.processInterestOpsUpdateRequests,key.interestOps={}",cnxn.getInterestOps());
                     key.interestOps(cnxn.getInterestOps());
                 }
             }
@@ -521,6 +531,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             }
 
             if (key.isReadable() || key.isWritable()) {
+                LOG.info("=======>>> key 可读还是可写？key.isReadable()="+ key.isReadable()+",key.isWritable()="+key.isWritable());
                 cnxn.doIO(key);
 
                 // Check if we shutdown or doIO() closed this connection

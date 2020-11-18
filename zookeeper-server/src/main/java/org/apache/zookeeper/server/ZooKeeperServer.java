@@ -960,6 +960,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         to.putInt(timeout);
         cnxn.setSessionId(sessionId);
         Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, to, null);
+        LOG.info("========>>> 提交创建session请求, 当前线程={}", Thread.currentThread().getName());
         submitRequest(si);
         return sessionId;
     }
@@ -1002,6 +1003,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         try {
             if (valid) {
                 if (serverCnxnFactory != null && serverCnxnFactory.cnxns.contains(cnxn)) {
+                    LOG.info("=======>>>注册连接");
                     serverCnxnFactory.registerConnection(cnxn);
                 } else if (secureServerCnxnFactory != null && secureServerCnxnFactory.cnxns.contains(cnxn)) {
                     secureServerCnxnFactory.registerConnection(cnxn);
@@ -1012,12 +1014,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
 
         try {
+            LOG.info("=======>>>构建连接的响应对象");
             ConnectResponse rsp = new ConnectResponse(
                 0,
                 valid ? cnxn.getSessionTimeout() : 0,
                 valid ? cnxn.getSessionId() : 0, // send 0 if session is no
                 // longer valid
                 valid ? generatePasswd(cnxn.getSessionId()) : new byte[16]);
+
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             bos.writeInt(-1, "len");
@@ -1028,6 +1033,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             baos.close();
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
+            LOG.info("=======>>>发送连接事件给客户端");
             cnxn.sendBuffer(bb);
 
             if (valid) {
@@ -1071,11 +1077,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void submitRequest(Request si) {
+        LOG.info("========>>> 进入ZooKeeperServer.submitRequest");
         enqueueRequest(si);
     }
 
     public void enqueueRequest(Request si) {
+        LOG.info("========>>> 进入ZooKeeperServer.enqueueRequest");
         if (requestThrottler == null) {
+            LOG.info("========>>> 进入ZooKeeperServer.enqueueRequest,{}", (requestThrottler == null));
             synchronized (this) {
                 try {
                     // Since all requests are passed to the request
@@ -1093,6 +1102,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
         }
+        LOG.info("========>>> 进入ZooKeeperServer.enqueueRequest,调用requestThrottler.submitRequest(si)");
         requestThrottler.submitRequest(si);
     }
 
@@ -1120,6 +1130,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             boolean validpacket = Request.isValid(si.type);
             if (validpacket) {
                 setLocalSessionFlag(si);
+                LOG.info("=======>>>firstProcessor="+firstProcessor.getClass().getName());
                 firstProcessor.processRequest(si);
                 if (si.cnxn != null) {
                     incInProcess();
@@ -1327,7 +1338,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification = "the value won't change after startup")
     public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer)
         throws IOException, ClientCnxnLimitException {
-
+        LOG.info("=======>>>进入ZooKeeperServer.processConnectRequest");
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");

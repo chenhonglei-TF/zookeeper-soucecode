@@ -98,6 +98,7 @@ public class WorkerService {
      * WorkerServices, will always run on the first thread.
      */
     public void schedule(WorkRequest workRequest) {
+        LOG.info("=======>>> 进入WorkerService.schedule方法");
         schedule(workRequest, 0);
     }
 
@@ -108,11 +109,12 @@ public class WorkerService {
      * this thread.
      */
     public void schedule(WorkRequest workRequest, long id) {
+        LOG.info("=======>>> 进入WorkerService.schedule方法，id="+ id);
         if (stopped) {
             workRequest.cleanup();
             return;
         }
-
+        LOG.info("=======>>> 进入WorkerService.schedule,封装scheduledWorkRequest任务");
         ScheduledWorkRequest scheduledWorkRequest = new ScheduledWorkRequest(workRequest);
 
         // If we have a worker thread pool, use that; otherwise, do the work
@@ -123,6 +125,7 @@ public class WorkerService {
                 // make sure to map negative ids as well to [0, size-1]
                 int workerNum = ((int) (id % size) + size) % size;
                 ExecutorService worker = workers.get(workerNum);
+                LOG.info("=======>>> 进入WorkerService.schedule， 提交任务到线程池处理");
                 worker.execute(scheduledWorkRequest);
             } catch (RejectedExecutionException e) {
                 LOG.warn("ExecutorService rejected execution", e);
@@ -151,6 +154,7 @@ public class WorkerService {
                     workRequest.cleanup();
                     return;
                 }
+                LOG.info("=======>>>当前线程名 "+ Thread.currentThread().getName() + ", workRequest="+workRequest.getClass().getName());
                 workRequest.doWork();
             } catch (Exception e) {
                 LOG.warn("Unexpected exception", e);

@@ -166,6 +166,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     /** Read the request payload (everything following the length prefix) */
     private void readPayload() throws IOException, InterruptedException, ClientCnxnLimitException {
+        LOG.info("=======>>> 进入NIOServerCnxn.readPayload");
         if (incomingBuffer.remaining() != 0) { // have we read length bytes?
             int rc = sock.read(incomingBuffer); // sock is non-blocking, so ok
             if (rc < 0) {
@@ -177,6 +178,7 @@ public class NIOServerCnxn extends ServerCnxn {
             incomingBuffer.flip();
             packetReceived(4 + incomingBuffer.remaining());
             if (!initialized) {
+                LOG.info("=======>>> 进入NIOServerCnxn.readPayload,initialized={} ", initialized);
                 readConnectRequest();
             } else {
                 readRequest();
@@ -276,6 +278,7 @@ public class NIOServerCnxn extends ServerCnxn {
              */
             directBuffer.flip();
 
+            LOG.info("写回客户端");
             int sent = sock.write(directBuffer);
 
             ByteBuffer bb;
@@ -314,6 +317,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * Handles read/write IO on connection.
      */
     void doIO(SelectionKey k) throws InterruptedException {
+        LOG.info("=======>>>进入NIOServerCnxn.doIO， key=",k.interestOps());
         try {
             if (!isSocketOpen()) {
                 LOG.warn("trying to do i/o on a null socket for session: 0x{}", Long.toHexString(sessionId));
@@ -336,6 +340,7 @@ public class NIOServerCnxn extends ServerCnxn {
                         isPayload = true;
                     }
                     if (isPayload) { // not the case for 4letterword
+                        LOG.info("=======>>> isPayload:"+isPayload);
                         readPayload();
                     } else {
                         // four letter words take care
@@ -413,6 +418,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     private void readConnectRequest() throws IOException, InterruptedException, ClientCnxnLimitException {
+        LOG.info("=======>>> 进入NIOServerCnxn.readConnectRequest");
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }

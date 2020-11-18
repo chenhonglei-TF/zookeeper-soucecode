@@ -107,7 +107,7 @@ public class FinalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) {
-        LOG.debug("Processing request:: {}", request);
+        LOG.debug("=======>>>FinalRequestProcessor.Processing request:: {}", request);
 
         // request.addRQRec(">final");
         long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
@@ -117,7 +117,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (LOG.isTraceEnabled()) {
             ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
         }
-
+        LOG.debug("=======>>>FinalRequestProcessor.processTxn");
         ProcessTxnResult rc = zks.processTxn(request);
 
         // ZOOKEEPER-558:
@@ -190,7 +190,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 throw ke;
             }
 
-            LOG.debug("{}", request);
+            LOG.debug("=======>>>request:{}", request);
 
             if (request.isStale()) {
                 ServerMetrics.getMetrics().STALE_REPLIES.add(1);
@@ -207,7 +207,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.createSession: {
                 lastOp = "SESS";
                 updateStats(request, lastOp, lastZxid);
-
+                LOG.info("=======>>>创建session");
                 zks.finishSessionInit(request.cnxn, true);
                 return;
             }
