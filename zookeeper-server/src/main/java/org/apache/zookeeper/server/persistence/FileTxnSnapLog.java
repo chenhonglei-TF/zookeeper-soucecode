@@ -48,6 +48,10 @@ import org.slf4j.LoggerFactory;
  * above the implementations
  * of txnlog and snapshot
  * classes
+ * 用于数据管理，设置服务器TickTime 会话超时时间，启动服务器端线程，创建启动会话管理器等操作
+ * 可以看作为ZK的底层持久化接口
+ *
+ *
  */
 public class FileTxnSnapLog {
 
