@@ -98,6 +98,7 @@ public class FileTxnLog implements TxnLog, Closeable {
 
     private static final Logger LOG;
 
+    //设置日志文件的魔数信息为ZKLG
     public static final int TXNLOG_MAGIC = ByteBuffer.wrap("ZKLG".getBytes()).getInt();
 
     public static final int VERSION = 2;
@@ -145,6 +146,7 @@ public class FileTxnLog implements TxnLog, Closeable {
         }
     }
 
+    //最后一次更新日志得到的 ZXID。
     long lastZxidSeen;
     volatile BufferedOutputStream logStream = null;
     volatile OutputArchive oa;
@@ -266,6 +268,18 @@ public class FileTxnLog implements TxnLog, Closeable {
               return append(hdr, txn, null);
     }
 
+    /**
+     * 实现记录事务操作
+     * @param hdr the transaction header
+     * @param txn
+     * @param digest transaction digest
+     * returns true iff something appended, otw false
+     * @return
+     * @throws IOException
+     *
+     * 会解析事务请求的头信息，并根据解析出来的 zxid 字段作为事务日志的文件名，之后设置日志的文件头信息 magic、version、dbid 以及日志文件的大小.
+     * 所有事务日志的命名方法都是“log.+ 该条事务会话的 zxid”
+     */
     @Override
     public synchronized boolean append(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
         if (hdr == null) {

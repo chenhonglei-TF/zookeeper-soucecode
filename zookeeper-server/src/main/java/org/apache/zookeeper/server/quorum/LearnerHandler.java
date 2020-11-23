@@ -58,6 +58,9 @@ import org.slf4j.LoggerFactory;
  * There will be an instance of this class created by the Leader for each
  * learner. All communication with a learner is handled by this
  * class.
+ *
+ * 在接收到来自 Leader 服务器的通知后，Follow 服务器会创建一个 LearnerHandler 类的实例，用来处理与 Leader 服务器的数据同步等操作.
+ * 它所负责的工作有：进行 Follower、Observer 服务器与 Leader 服务器的数据同步、事务性会话请求的转发以及 Proposal 提议投票等功能。
  */
 public class LearnerHandler extends ZooKeeperThread {
 
@@ -451,6 +454,10 @@ public class LearnerHandler extends ZooKeeperThread {
     /**
      * This thread will receive packets from the peer and process them and
      * also listen to new connections from new peers.
+     *
+     * 首先通过 syncFollower 函数判断数据同步的方式是否是快照方式。
+     * 如果是快照方式，就将 Leader 服务器上的数据操作日志 dump 出来发送给 Follower 等服务器，
+     * 在 Follower 等服务器接收到数据操作日志后，在本地执行该日志，最终完成数据的同步操作
      */
     @Override
     public void run() {

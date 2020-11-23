@@ -45,6 +45,9 @@ import org.slf4j.LoggerFactory;
  * FinalRequestProcessor
  *
  * A SyncRequestProcessor is also spawned off to log proposals from the leader.
+ *
+ *
+ * 该类的作用是封装 Follow 服务器的属性和行为，你可以把该类当作一台 Follow 服务器的代码抽象。
  */
 public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 

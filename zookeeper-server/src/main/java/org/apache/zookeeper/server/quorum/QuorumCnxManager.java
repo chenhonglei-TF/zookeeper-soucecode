@@ -92,7 +92,8 @@ import org.slf4j.LoggerFactory;
  * message to the tail of the queue, thus changing the order of messages.
  * Although this is not a problem for the leader election, it could be a problem
  * when consolidating peer communication. This is to be verified, though.
- *
+ *在 ZooKeeper 集群模式下服务启动后。首先会创建用来选举 Leader 节点的工具类 QuorumCnxManager。
+ * 用来管理 Leader 服务器与 Follow 服务器的 TCP 通信，以及消息的接收与发送等功能
  */
 
 public class QuorumCnxManager {
@@ -155,6 +156,7 @@ public class QuorumCnxManager {
 
     /*
      * Mapping from Peer to Thread number
+     * 用来管理每一个通信的服务器。
      */
     final ConcurrentHashMap<Long, SendWorker> senderWorkerMap;
     final ConcurrentHashMap<Long, BlockingQueue<ByteBuffer>> queueSendMap;
@@ -334,6 +336,7 @@ public class QuorumCnxManager {
         initializeConnectionExecutor(mySid, quorumCnxnThreadsSize);
 
         // Starts listener thread that waits for connection requests
+        //实例化 Listener 对象用于监听 Leader 选举端口
         listener = new Listener();
         listener.setName("QuorumPeerListener");
     }
@@ -1143,6 +1146,10 @@ public class QuorumCnxManager {
      * Thread to send messages. Instance waits on a queue, and send a message as
      * soon as there is one available. If connection breaks, then opens a new
      * one.
+     *
+     * 用来向集群中的其他服务器发送投票信息。
+     * 在 SendWorker 类中，不会立刻将投票信息发送到 ZooKeeper 集群中，而是将投票信息首先插入到 pollSendQueue 队列，
+     * 之后通过 send 函数进行发送
      */
     class SendWorker extends ZooKeeperThread {
 
@@ -1325,6 +1332,9 @@ public class QuorumCnxManager {
     /**
      * Thread to receive messages. Instance waits on a socket read. If the
      * channel breaks, then removes itself from the pool of receivers.
+     *
+     * 主要负责消息接收。在 ZooKeeper 的实现中，为每一个集群中的通信服务器都分配一个 RecvWorker，负责接收来自其他服务器发送的信息。
+     * 在 RecvWorker 的 run 函数中，不断通过 queueSendMap 队列读取信息
      */
     class RecvWorker extends ZooKeeperThread {
 

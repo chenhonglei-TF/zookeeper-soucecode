@@ -69,6 +69,19 @@ import org.slf4j.LoggerFactory;
  * In addition to the config file. There is a file in the data directory called
  * "myid" that contains the server id as an ASCII decimal value.
  *
+ * 1.运行时VM参数：-Dlog4j.configuration=file:C:\sourcecode\zookeeper-soucecode\conf\log4j.properties
+ * 2.运行时Program args:conf/zoo.cfg
+ * 3.运行该类需要勾选 Include denpendencies with "Provided" scope
+ *
+ * 启动流程：
+ * 1.解析配置文件
+ * 2.创建文件清理器
+ * 3.服务初始化
+ * 4.ServerStats创建
+ * 5.FileTxnSnapLog 类
+ * 6.ServerCnxnFactory 类创建
+ * 7.初始化请求处理链
+ *
  */
 @InterfaceAudience.Public
 public class QuorumPeerMain {
@@ -133,8 +146,10 @@ public class QuorumPeerMain {
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
+            //集群模式入口
             runFromConfig(config);
         } else {
+            //单机模式
             LOG.warn("Either no config or no quorum defined in config, running in standalone mode");
             // there is only server in the quorum -- run as standalone
             ZooKeeperServerMain.main(args);

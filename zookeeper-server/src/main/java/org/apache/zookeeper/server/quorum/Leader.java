@@ -322,16 +322,25 @@ public class Leader extends LearnerMaster {
 
     /**
      * This message is for follower to expect diff
+     * DIFF 同步即差异化同步的方式，在 ZooKeeper 集群中，Leader 服务器探测到 Learnning 服务器的存在后，首先会向该 Learnning 服务器发送一个 DIFF 不同指令。
+     * 在收到该条指令后，Learnning 服务器会进行差异化方式的数据同步操作。在这个过程中，Leader 服务器会将一些 Proposal 发送给 Learnning 服务器。
+     * 之后 Learnning 服务器在接收到来自 Leader 服务器的 commit 命令后执行数据持久化的操作。
      */
     static final int DIFF = 13;
 
     /**
      * This is for follower to truncate its logs
+     * TRUNC 同步是指仅回滚操作，就是将 Learnning 服务器上的操作日志数据回滚到与 Leader 服务器上的操作日志数据一致的状态下。之后并不进行 DIFF 方式的数据同步操作
      */
     static final int TRUNC = 14;
 
     /**
      * This is for follower to download the snapshots
+     * SNAP 同步的意思是全量同步，是将 Leader 服务器内存中的数据全部同步给 Learnning 服务器。
+     * 在进行全量同步的过程中，Leader 服务器首先会向 ZooKeeper 集群中的 Learning 服务器发送一个 SNAP 命令，
+     * 在接收到 SNAP 命令后， ZooKeeper 集群中的 Learning 服务器开始进行全量同步的操作。
+     * 随后，Leader 服务器会从内存数据库中获取到全量数据节点和会话超时时间记录器，将他们序列化后传输给 Learnning 服务器。
+     * Learnning 服务器接收到该全量数据后，会对其反序列化后载入到内存数据库中。
      */
     static final int SNAP = 15;
 
@@ -430,6 +439,9 @@ public class Leader extends LearnerMaster {
     // VisibleForTesting
     protected final Proposal newLeaderProposal = new Proposal();
 
+    /**
+     * Follower节点通过该类来接收Lead节点的启动通知
+     */
     class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
 
         private final AtomicBoolean stop = new AtomicBoolean(false);

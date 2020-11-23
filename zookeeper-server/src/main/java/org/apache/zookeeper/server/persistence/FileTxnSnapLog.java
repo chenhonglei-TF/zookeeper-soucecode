@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * 用于数据管理，设置服务器TickTime 会话超时时间，启动服务器端线程，创建启动会话管理器等操作
  * 可以看作为ZK的底层持久化接口
  *
- *
+ * 数据快照文件
  */
 public class FileTxnSnapLog {
 
@@ -464,6 +464,10 @@ public class FileTxnSnapLog {
      * serialized onto disk
      * @param syncSnap sync the snapshot immediately after write
      * @throws IOException
+     *
+     * 首先会创建数据快照文件，之后调用 FileSnap 类对内存数据进行序列化，并写入到快照文件中。
+     *
+     * 使用 zxid 作为文件名称。
      */
     public void save(
         DataTree dataTree,

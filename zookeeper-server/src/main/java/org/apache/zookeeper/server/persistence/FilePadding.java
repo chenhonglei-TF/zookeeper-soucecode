@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 public class FilePadding {
 
     private static final Logger LOG;
-    private static long preAllocSize = 65536 * 1024;
+    private static long preAllocSize = 65536 * 1024;//可存储的日志文件大小。如用户不进行特殊设置，默认的大小为 65536*1024 字节。
     private static final ByteBuffer fill = ByteBuffer.allocateDirect(1);
 
     static {

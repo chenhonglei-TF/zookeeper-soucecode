@@ -39,6 +39,7 @@ public class ExpiryQueue<E> {
      * The maximum number of buckets is equal to max timeout/expirationInterval,
      * so the expirationInterval should not be too small compared to the
      * max timeout that this expiry queue needs to maintain.
+     * 用来根据不同的过期时间区间存储会话
      */
     private final ConcurrentHashMap<Long, Set<E>> expiryMap = new ConcurrentHashMap<Long, Set<E>>();
 
@@ -50,6 +51,11 @@ public class ExpiryQueue<E> {
         nextExpirationTime.set(roundToNextInterval(Time.currentElapsedTime()));
     }
 
+    /**
+     * 将会话过期时间转化成心跳时间的整数倍，根据不同的过期时间段管理会话
+     * @param time
+     * @return
+     */
     private long roundToNextInterval(long time) {
         return (time / expirationInterval + 1) * expirationInterval;
     }

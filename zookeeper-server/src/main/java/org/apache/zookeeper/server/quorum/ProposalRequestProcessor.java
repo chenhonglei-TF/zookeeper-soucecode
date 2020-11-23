@@ -28,6 +28,13 @@ import org.slf4j.LoggerFactory;
 /**
  * This RequestProcessor simply forwards requests to an AckRequestProcessor and
  * SyncRequestProcessor.
+ *
+ * 主要作用就是对事务性的请求操作进行处理，而从 ProposalRequestProcessor 处理器的名字中就能大概猜出，其具体的工作就是“提议”。
+ * 所谓的“提议”是说，当处理一个事务性请求的时候，
+ * ZooKeeper 首先会在服务端发起一次投票流程，该投票的主要作用就是通知 ZooKeeper 服务端的各个机器进行事务性的操作了，避免因为某个机器出现问题而造成事物不一致等问题。
+ * 在 ProposalRequestProcessor 处理器阶段，其内部又分成了三个子流程，分别是：Sync 流程、Proposal 流程、Commit 流程，
+ *
+ * 主要工作就是投票和统计投票结果。投票的方式大体上遵循多数原则，
  */
 public class ProposalRequestProcessor implements RequestProcessor {
 

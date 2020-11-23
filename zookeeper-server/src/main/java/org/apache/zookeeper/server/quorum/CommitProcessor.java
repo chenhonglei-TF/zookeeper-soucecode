@@ -71,6 +71,20 @@ import org.slf4j.LoggerFactory;
  *
  * The current implementation solves the third constraint by simply allowing no
  * read requests to be processed in parallel with write requests.
+ *
+ *
+ *注意，在完成 Proposal 流程后，ZooKeeper 服务器上的数据不会进行任何改变，成功通过 Proposal 流程只是说明 ZooKeeper 服务可以执行事务性的请求操作了，
+ * 而要真正执行具体数据变更，需要在 Commit 流程中实现，这种实现方式很像是 MySQL 等数据库的操作方式。
+ * 在 Commit 流程中，它的主要作用就是完成请求的执行。其底层实现是通过 CommitProcessor 实现的。
+ *
+ * CommitProcessor 类的内部有一个 LinkedList 类型的 queuedRequests 队列，queuedRequests 队列的作用是，
+ * 当 CommitProcessor 收到请求后，并不会立刻对该条请求进行处理，而是将其放在 queuedRequests 队列中。
+ * 之后再调用 commit 方法取出 queuedRequests 队列中等待的请求进行处理.
+ *
+ *
+ * 该处理器的作用是对来自集群中其他服务器的事务性请求和本地服务器的提交请求操作进行匹配。
+ * 匹配的方式是，将本地执行的 sumbit 提交请求，与集群中其他服务器接收到的 Commit 会话请求进行匹配，匹配完成后再交由 Follow 处理链上的下一个处理器进行处理。
+ * 最终，当一个客户端会话经过 Final 处理器操作后，就完成了整个 Follow 服务器的会话处理过程，并将结果响应给客户端
  */
 public class CommitProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 

@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 /**
  * This RequestProcessor forwards any requests that modify the state of the
  * system to the Leader.
+ * 在 Follow 角色服务器的处理链执行过程中，FollowerRequestProcessor 作为第一个处理器，主要负责筛选该条会话请求是否是事务性的会话请求。
+ * 如果是事务性的会话请求，则转发给 Leader 服务器进行操作。如果不是事务性的会话请求，则交由 Follow 服务器处理链上的下一个处理器进行处理。
  */
 public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 

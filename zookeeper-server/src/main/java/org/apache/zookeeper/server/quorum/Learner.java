@@ -68,6 +68,8 @@ import org.slf4j.LoggerFactory;
  * This class is the superclass of two of the three main actors in a ZK
  * ensemble: Followers and Observers. Both Followers and Observers share
  * a good deal of code which is moved into Peer to avoid duplication.
+ *
+ * 该类可以看作是集群中 Learnning 服务器的实例对象，与集群中的 Learning 服务器是一一对应的
  */
 public class Learner {
 
@@ -507,6 +509,7 @@ public class Learner {
         Deque<Long> packetsCommitted = new ArrayDeque<>();
         Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
         synchronized (zk) {
+            //通过 qp.getType() 方法判断数据同步的方式
             if (qp.getType() == Leader.DIFF) {
                 LOG.info("Getting a diff from the leader 0x{}", Long.toHexString(qp.getZxid()));
                 self.setSyncMode(QuorumPeer.SyncMode.DIFF);
@@ -613,6 +616,7 @@ public class Learner {
                             packetsNotCommitted.remove();
                         }
                     } else {
+                        //调用 packetsCommitted.add(qp.getZxid()) 方法将事物操作同步到处理队列中，之后调用事物操作线程进行处理
                         packetsCommitted.add(qp.getZxid());
                     }
                     break;

@@ -71,6 +71,9 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
      * received from the Leader.
      *
      * @param request
+     *
+     * Observer 不会接收网络中的 Proposal 请求，不会像 Follow 一样，在 Proposal 阶段就获得 Leader 服务器发送的变更数据。
+     * Observer 服务器是从 INFORM 数据包中获得变更的数据，在 commitRequest 函数的内部实现中，提交执行来自 INFORM 数据包中的事务操作。
      */
     public void commitRequest(Request request) {
         if (syncRequestProcessorEnabled) {

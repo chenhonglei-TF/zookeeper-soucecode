@@ -60,7 +60,10 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
             isClosing = false;
         }
 
+        //会话 ID 作为一个会话的标识符，当我们创建一次会话的时候，ZooKeeper 会自动为其分配一个唯一的 ID 编码。
         final long sessionId;
+        //一个会话的超时时间就是指一次会话从发起后到被服务器关闭的时长。而设置会话超时时间后，服务器会参考设置的超时时间，最终计算一个服务端自己的超时时间。
+        // 而这个超时时间则是最终真正用于 ZooKeeper 中服务端用户会话管理的超时时间
         final int timeout;
         boolean isClosing;
 
@@ -88,6 +91,8 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
      * Use ">>> 8", not ">> 8" to make sure that the high order 1 byte is entirely up to the server Id(@see ZOOKEEPER-1622).
      * @param id server Id
      * @return the Session Id
+     *
+     * 首先以毫秒为单位获取系统的当前时间，之后将该值通过位运算方式向左移动 24 位，再向右移动 8 位。最后根据服务器的 SID 进行或运算，得到的最终结果就作为该会话的 ID 编码
      */
     public static long initializeNextSessionId(long id) {
         long nextSid;
@@ -106,6 +111,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         this.expirer = expirer;
         this.sessionExpiryQueue = new ExpiryQueue<SessionImpl>(tickTime);
         this.sessionsWithTimeout = sessionsWithTimeout;
+        /**
+         * 调用 initializeNextSession 方法来生成一个会话 ID ，该会话 ID 会作为一个唯一的标识符，在 ZooKeeper 服务之后的运行中用来标记一个特定的会话。
+         */
         this.nextSessionId.set(initializeNextSessionId(serverId));
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
             trackSession(e.getKey(), e.getValue());
@@ -152,6 +160,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     public void run() {
         try {
             while (running) {
+                //首先获取会话过期的下一个时间点
                 long waitTime = sessionExpiryQueue.getWaitTime();
                 if (waitTime > 0) {
                     Thread.sleep(waitTime);
@@ -160,7 +169,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
                 for (SessionImpl s : sessionExpiryQueue.poll()) {
                     ServerMetrics.getMetrics().STALE_SESSIONS_EXPIRED.add(1);
+                    //之后通过 setSessionClosing 函数设置会话的关闭状态
                     setSessionClosing(s.sessionId);
+                    //最后调用 expire 方法进行会话清理工作
                     expirer.expire(s);
                 }
             }

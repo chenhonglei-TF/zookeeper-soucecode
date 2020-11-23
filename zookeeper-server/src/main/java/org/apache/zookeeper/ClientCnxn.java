@@ -101,6 +101,7 @@ import org.slf4j.MDC;
  * of available servers to connect to and "transparently" switches servers it is
  * connected to as needed.
  *
+ * 主要负责维护客户端与服务端的网络连接和信息交互
  */
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class ClientCnxn {
@@ -144,11 +145,14 @@ public class ClientCnxn {
 
     /**
      * These are the packets that have been sent and are waiting for a response.
+     * 服务端响应客户端操作的响应队列 pendingQueue
      */
     private final Queue<Packet> pendingQueue = new ArrayDeque<>();
 
     /**
      * These are the packets that need to be sent.
+     *
+     * 客户端发送给服务端的发送队列 outgoingQueue
      */
     private final LinkedBlockingDeque<Packet> outgoingQueue = new LinkedBlockingDeque<Packet>();
 
@@ -259,6 +263,8 @@ public class ClientCnxn {
 
     /**
      * This class allows us to pass the headers and the relevant records around.
+     *
+     * Packet 可以看作是一个 ZooKeeper 定义的，用来进行网络通信的数据结构,其主要作用是封装了网络通信协议层的数据.
      */
     static class Packet {
 
@@ -315,6 +321,13 @@ public class ClientCnxn {
             this.watchRegistration = watchRegistration;
         }
 
+        /**
+         * 将 Packet 对象的数据进行序列化，以便之后用于网络传输
+         *
+         * 并不是将 Packet 类中的所有属性字段进行序列化。
+         * 而是只对请求头信息（requestHeader）、请求体信息（request）、只读（readOnly）这三个属性字段进行序列化。
+         * 而其余的属性字段则只是存储在客户端，用于之后的相关操作
+         */
         public void createBB() {
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -866,6 +879,7 @@ public class ClientCnxn {
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
+     * 作用就是用来管理操作客户端和服务端的网络 I/O
      */
     class SendThread extends ZooKeeperThread {
 
@@ -1106,6 +1120,9 @@ public class ClientCnxn {
             return paths;
         }
 
+        /**
+         * 发送客户端是否存活的心跳检查
+         */
         private void sendPing() {
             lastPingSentNs = System.nanoTime();
             RequestHeader h = new RequestHeader(ClientCnxn.PING_XID, OpCode.ping);

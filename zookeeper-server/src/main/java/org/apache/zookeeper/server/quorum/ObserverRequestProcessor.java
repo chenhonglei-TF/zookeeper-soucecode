@@ -60,6 +60,9 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
         this.nextProcessor = nextProcessor;
     }
 
+    /**
+     * 首先判断客户端请求的会话类型，将所有事务性的会话请求交给 Leader 服务器处理，
+     */
     @Override
     public void run() {
         try {

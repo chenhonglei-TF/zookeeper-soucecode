@@ -31,6 +31,11 @@ import org.slf4j.LoggerFactory;
  * 'autopurge.purgeInterval'. It keeps the most recent
  * 'autopurge.snapRetainCount' number of snapshots and corresponding transaction
  * logs.
+ * 历史文件的清理工具类
+ *
+ * 可以通过在 zoo.cfg 文件中配置 autopurge.snapRetainCount 和 autopurge.purgeInterval 这两个参数实现数据文件的定时清理功能，
+ * autopurge.purgeInterval 这个参数指定了清理频率，以小时为单位，需要填写一个 1 或更大的整数，默认是 0，表示不开启自己清理功能。
+ * autopurge.snapRetainCount 这个参数和上面的参数搭配使用，这个参数指定了需要保留的文件数目，默认是保留 3 个
  */
 public class DatadirCleanupManager {
 
@@ -47,8 +52,10 @@ public class DatadirCleanupManager {
 
     private PurgeTaskStatus purgeTaskStatus = PurgeTaskStatus.NOT_STARTED;
 
+    //数据快照地址
     private final File snapDir;
 
+    //日志数据的存放地址
     private final File dataLogDir;
 
     private final int snapRetainCount;

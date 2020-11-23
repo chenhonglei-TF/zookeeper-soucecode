@@ -63,6 +63,7 @@ public class FastLeaderElection implements Election {
      * Upper bound on the amount of time between two consecutive
      * notification checks. This impacts the amount of time to get
      * the system up again after long partitions. Currently 60 seconds.
+     * 最大通信间隔
      */
 
     private static int maxNotificationInterval = 60000;
@@ -70,6 +71,7 @@ public class FastLeaderElection implements Election {
     /**
      * Lower bound for notification check. The observer don't need to use
      * the same lower bound as participant members
+     * 服务器等待时间
      */
     private static int minNotificationInterval = finalizeWait;
 
@@ -358,6 +360,9 @@ public class FastLeaderElection implements Election {
 
                             // State of peer that sent this message
                             QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
+                            /**
+                             * Follow 服务器会根据返回的数据，判断 Leader 服务器的运行状态，如果返回的是 LOOKING 关键字，表明与集群中 Leader 服务器无法正常通信。
+                             */
                             switch (rstate) {
                             case 0:
                                 ackstate = QuorumPeer.ServerState.LOOKING;
@@ -415,6 +420,10 @@ public class FastLeaderElection implements Election {
                                     && (n.electionEpoch < logicalclock.get())) {
                                     Vote v = getVote();
                                     QuorumVerifier qv = self.getQuorumVerifier();
+                                    /**
+                                     * 调用 ToSend 函数向 ZooKeeper 集群中的其他角色服务器发送本机的投票信息，其他服务器在接收投票信息后，会对投票信息进行有效性验证等操作，
+                                     * 之后 ZooKeeper 集群统计投票信息，如果过半数的机器投票信息一致，则集群就重新选出新的 Leader 服务器
+                                     */
                                     ToSend notmsg = new ToSend(
                                         ToSend.mType.notification,
                                         v.getId(),
@@ -824,6 +833,10 @@ public class FastLeaderElection implements Election {
         proposedEpoch = epoch;
     }
 
+    /**
+     * 设置本机的投票内容
+     * @return
+     */
     public synchronized Vote getVote() {
         return new Vote(proposedLeader, proposedZxid, proposedEpoch);
     }

@@ -109,6 +109,10 @@ import org.slf4j.LoggerFactory;
  * </pre>
  *
  * The request for the current leader will consist solely of an xid: int xid;
+ *
+ * 我们可以将每个 QuorumPeer 类的实例看作集群中的一台服务器。
+ * 在 ZooKeeper 集群模式的运行中，一个 QuorumPeer 类的实例通常具有 3 种状态，
+ * 分别是参与 Leader 节点的选举、作为 Follow 节点同步 Leader 节点的数据，以及作为 Leader 节点管理集群中的 Follow 节点。
  */
 public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider {
 
