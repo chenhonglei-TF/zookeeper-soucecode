@@ -27,6 +27,9 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Leader服务器向Flower发起提案
+ */
 public class SendAckRequestProcessor implements RequestProcessor, Flushable {
 
     private static final Logger LOG = LoggerFactory.getLogger(SendAckRequestProcessor.class);
@@ -38,7 +41,7 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
     }
 
     public void processRequest(Request si) {
-        if (si.type != OpCode.sync) {
+        if (si.type != OpCode.sync) {//判断是否是同步操作
             QuorumPacket qp = new QuorumPacket(Leader.ACK, si.getHdr().getZxid(), null, null);
             try {
                 si.logLatency(ServerMetrics.getMetrics().PROPOSAL_ACK_CREATION_LATENCY);
